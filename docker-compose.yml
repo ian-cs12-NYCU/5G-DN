@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  dn-web:
+    container_name: dn-web
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/data:/data:ro
+    restart: unless-stopped

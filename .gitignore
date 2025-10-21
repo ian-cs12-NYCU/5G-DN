@@ -1,1 +1,38 @@
+# Mosquitto runtime data and logs
+mosquitto/data/
+mosquitto/log/
+
+# nginx generated data (if not intentionally versioned)
+nginx/data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Logs and databases
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment and secrets
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Misc
+node_modules/
 nginx/data
+
+# Capture
+Pcap/

@@ -20,6 +20,7 @@ services:
       - ./mosquitto/config:/mosquitto/config:ro
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
+      - ./mosquitto/responder.py:/usr/local/bin/responder.py:ro
     restart: unless-stopped
     networks:
       dnnet:

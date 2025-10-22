@@ -5,7 +5,8 @@
 
 MQTT_HOST="172.18.0.20"
 MQTT_PORT="1883"
-TOPIC="hello world"
+REQUEST_TOPIC="hello world"
+RESPONSE_TOPIC="hello world/reply"
 
 echo "=========================================="
 echo "🧪 MQTT 功能測試腳本"
@@ -42,20 +43,20 @@ echo ""
 # 互動式測試
 echo "4️⃣ 開始互動式測試"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "將會同時訂閱和發送訊息到 topic: '${TOPIC}'"
+echo "將會訂閱回應並發送請求，request: '${REQUEST_TOPIC}' response: '${RESPONSE_TOPIC}'"
 echo "訂閱 5 秒後自動發送測試訊息..."
 echo ""
 
-# 在背景訂閱訊息
-timeout 10 mosquitto_sub -h ${MQTT_HOST} -p ${MQTT_PORT} -t "${TOPIC}" -v &
+# 在背景訂閱回應 topic
+timeout 10 mosquitto_sub -h ${MQTT_HOST} -p ${MQTT_PORT} -t "${RESPONSE_TOPIC}" -v &
 SUB_PID=$!
 
 # 等待訂閱建立
 sleep 2
 
-# 發送測試訊息
-echo "發送測試訊息..."
-mosquitto_pub -h ${MQTT_HOST} -p ${MQTT_PORT} -t "${TOPIC}" -m "test message from script"
+# 發送測試訊息（發到 request topic）
+echo "發送測試請求..."
+mosquitto_pub -h ${MQTT_HOST} -p ${MQTT_PORT} -t "${REQUEST_TOPIC}" -m "test message from script"
 
 # 等待接收回應
 echo "👂 等待 Responder 回應（5 秒）..."

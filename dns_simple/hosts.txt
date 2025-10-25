@@ -1,0 +1,24 @@
+# Sample hosts mapping for the minimal DNS server
+# Format: domain.ip-or-hostname
+# Lines starting with # are ignored.
+
+example.local 10.10.0.5
+test.local 10.10.0.6
+service.internal 192.168.50.10
+
+# Additional requested domains (IPs chosen arbitrarily for traffic simulation)
+google.com 10.10.10.1
+example.com 10.10.10.2
+github.com 10.10.10.3
+stackoverflow.com 10.10.10.4
+youtube.com 10.10.10.5
+facebook.com 10.10.10.6
+twitter.com 10.10.10.7
+amazon.com 10.10.10.8
+wikipedia.org 10.10.10.9
+reddit.com 10.10.10.10
+linkedin.com 10.10.10.11
+netflix.com 10.10.10.12
+instagram.com 10.10.10.13
+apple.com 10.10.10.14
+microsoft.com 10.10.10.15

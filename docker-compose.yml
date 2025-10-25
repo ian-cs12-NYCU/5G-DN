@@ -26,6 +26,20 @@ services:
       dnnet:
         ipv4_address: 172.18.0.20
 
+  dns-responder:
+    container_name: dns-responder
+    build:
+      context: ./dns_simple
+      network: host
+    restart: unless-stopped
+    ports:
+      - "5353:53/udp"
+    volumes:
+      - ./dns_simple/hosts.txt:/app/hosts.txt:rw
+    networks:
+      dnnet:
+        ipv4_address: 172.18.0.30
+
 networks:
   dnnet:
     name: dnnet

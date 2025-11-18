@@ -16,10 +16,16 @@ docker ps
 echo -e "\n${YELLOW}獲取容器 IP 地址...${NC}"
 CIP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' dn-web)
 MQTT_CIP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mqtt-broker)
+DNS_CIP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' dns-responder)
 
 if [ -z "$CIP" ] || [ -z "$MQTT_CIP" ]; then
     echo -e "${YELLOW}錯誤: 無法獲取容器 IP 地址，請確認容器是否正在運行${NC}"
     exit 1
+fi
+
+if [ -z "$DNS_CIP" ]; then
+  echo -e "${YELLOW}錯誤: 無法獲取 dns-responder 容器 IP 地址，請確認 dns-responder 是否正在運行${NC}"
+  exit 1
 fi
 
 echo -e "${GREEN}Web 容器 IP: $CIP${NC}"
@@ -61,6 +67,15 @@ echo "  添加到 Web 容器的 DNAT 規則 (所有 UDP 端口)"
 sudo iptables -t nat -A PREROUTING -s $ANDY -d $SEG -p udp \
   -j DNAT --to-destination ${CIP}
 
+# 將進入 SEG 的 DNS 流量導向 dns-responder（優先於廣域 DNAT）
+echo "  添加到 dns-responder 的 DNAT 規則 (UDP 53) - DNS UDP"
+sudo iptables -t nat -I PREROUTING 1 -s $ANDY -d $SEG -p udp --dport 53 \
+  -j DNAT --to-destination ${DNS_CIP}:53
+
+echo "  添加到 dns-responder 的 DNAT 規則 (TCP 53) - DNS TCP"
+sudo iptables -t nat -I PREROUTING 1 -s $ANDY -d $SEG -p tcp --dport 53 \
+  -j DNAT --to-destination ${DNS_CIP}:53
+
 # 設置 FORWARD 規則 - 允許所有流量通過
 echo -e "\n${YELLOW}設置 FORWARD 規則 (允許所有流量)...${NC}"
 
@@ -93,6 +108,16 @@ sudo iptables -A FORWARD -p icmp -s $ANDY -d ${MQTT_CIP} -j ACCEPT
 
 echo "  允許 ICMP (ping) 從 MQTT 容器到 UE"
 sudo iptables -A FORWARD -p icmp -s ${MQTT_CIP} -d $ANDY -j ACCEPT
+
+echo "  允許從 UE 到 dns-responder 的 DNS 流量 (UDP 53 和 TCP 53)"
+sudo iptables -A FORWARD -s $ANDY -d ${DNS_CIP} -p udp --dport 53 \
+  -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A FORWARD -s $ANDY -d ${DNS_CIP} -p tcp --dport 53 \
+  -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+
+echo "  允許從 dns-responder 回到 UE 的 DNS 回應"
+sudo iptables -A FORWARD -s ${DNS_CIP} -d $ANDY \
+  -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
 echo -e "\n${GREEN}=== iptables 規則設置完成 ===${NC}\n"
 

@@ -8,6 +8,7 @@ non-privileged port (e.g., 5353) to avoid needing root to bind 53.
 """
 import argparse
 import socket
+import random
 from dnslib import DNSRecord, DNSHeader, RR, QTYPE, A, RCODE
 
 
@@ -26,6 +27,45 @@ def load_hosts(path):
     return m
 
 
+# Domains we should always answer (with a random IP) instead of returning NXDOMAIN.
+# This simulates DNS responses for a set of well-known domains in tests.
+AUTO_RESPOND_DOMAINS = set([
+    "google.com",
+    "example.com",
+    "github.com",
+    "stackoverflow.com",
+    "youtube.com",
+    "facebook.com",
+    "twitter.com",
+    "amazon.com",
+    "wikipedia.org",
+    "reddit.com",
+    "linkedin.com",
+    "netflix.com",
+    "instagram.com",
+    "apple.com",
+    "microsoft.com",
+])
+
+
+def random_private_ipv4():
+    # return an address in 10.0.0.0/8 to avoid appearing as a public routable IP
+    return f"10.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(1,254)}"
+
+
+def should_autorespond(qname_lower: str) -> bool:
+    """Return True if qname should be auto-responded based on AUTO_RESPOND_DOMAINS.
+
+    Matches either an exact domain (example.com) or any subdomain (*.example.com).
+    """
+    for d in AUTO_RESPOND_DOMAINS:
+        if qname_lower == d:
+            return True
+        if qname_lower.endswith('.' + d):
+            return True
+    return False
+
+
 def handle_request(data, addr, sock, hosts_path):
     try:
         req = DNSRecord.parse(data)
@@ -42,11 +82,19 @@ def handle_request(data, addr, sock, hosts_path):
     reply = DNSRecord(DNSHeader(id=req.header.id, qr=1, aa=1, ra=0), q=req.q)
 
     if qtype == 'A':
-        ip = hosts.get(qname.lower())
-        if ip:
+        qlower = qname.lower()
+
+        # First, if the name matches the auto-respond list (exact or subdomain), send a random private IPv4
+        if should_autorespond(qlower):
+            ip = random_private_ipv4()
             reply.add_answer(RR(q.get_qname(), QTYPE.A, rdata=A(ip), ttl=60))
         else:
-            reply.header.rcode = RCODE.NXDOMAIN
+            ip = hosts.get(qlower)
+            if ip:
+                reply.add_answer(RR(q.get_qname(), QTYPE.A, rdata=A(ip), ttl=60))
+            else:
+                # Keep existing behaviour for names we don't handle
+                reply.header.rcode = RCODE.NXDOMAIN
     else:
         reply.header.rcode = RCODE.NXDOMAIN
 

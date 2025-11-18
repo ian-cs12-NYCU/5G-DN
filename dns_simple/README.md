@@ -32,6 +32,28 @@ Each non-comment line contains: `domain ip` (separated by whitespace). The serve
 
 Do I need a DNS->IP mapping table?
 
-Yes — for this minimal responder you must provide the mappings for the names you want the server to answer. Put them in `hosts.txt`. If a name is not found the server returns NXDOMAIN.
+Yes — for this minimal responder you must provide the mappings for the names you want the server to answer. Put them in `hosts.txt`.
+
+Auto-responded domains
+
+This responder will always answer A queries (with a randomly generated private IPv4 in the 10.0.0.0/8 space) for the following well-known domains instead of returning NXDOMAIN. This is useful to simulate DNS resolution in tests where you don't care about the real IPs:
+
+- google.com
+- example.com
+- github.com
+- stackoverflow.com
+- youtube.com
+- facebook.com
+- twitter.com
+- amazon.com
+- wikipedia.org
+- reddit.com
+- linkedin.com
+- netflix.com
+- instagram.com
+- apple.com
+- microsoft.com
+
+For names not in this list the server will look up `hosts.txt` and return the configured IP; if not found it returns NXDOMAIN.
 
 If you need more advanced behaviour (recursive resolving, wildcards, PTR records, SRV, or forwarding to upstream resolvers), consider using `dnsmasq` or `bind9` instead.

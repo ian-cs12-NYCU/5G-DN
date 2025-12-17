@@ -1,3 +1,8 @@
+## 環境設置
+```
+./script/setup_iptable/setup_iptables.sh
+```
+
 ## Test dn-web
 
 ```

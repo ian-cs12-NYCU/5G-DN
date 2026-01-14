@@ -66,6 +66,7 @@ sudo iptables -t nat -D PREROUTING -s $ANDY -d $SEG -p tcp --dport 1883 -j DNAT 
 sudo iptables -t nat -D PREROUTING -s $ANDY -d $SEG -p tcp --dport 8883 -j DNAT --to-destination ${MQTT_CIP}:8883 2>/dev/null || true
 sudo iptables -t nat -D PREROUTING -s $ANDY -d $SEG -p tcp -j DNAT --to-destination ${CIP} 2>/dev/null || true
 sudo iptables -t nat -D PREROUTING -s $ANDY -d $SEG -p udp -j DNAT --to-destination ${CIP} 2>/dev/null || true
+sudo iptables -t nat -D PREROUTING -s $ANDY -d $SEG -p icmp -j DNAT --to-destination ${CIP} 2>/dev/null || true
 sudo iptables -t nat -D PREROUTING -s $ANDY -d $SEG -p udp --dport 53 -j DNAT --to-destination ${DNS_CIP}:53 2>/dev/null || true
 sudo iptables -t nat -D PREROUTING -s $ANDY -d $SEG -p tcp --dport 53 -j DNAT --to-destination ${DNS_CIP}:53 2>/dev/null || true
 
@@ -104,6 +105,10 @@ sudo iptables -t nat -A PREROUTING -s $ANDY -d $SEG -p tcp \
 
 echo "  添加到 Web 容器的 DNAT 規則 (所有 UDP 端口)"
 sudo iptables -t nat -A PREROUTING -s $ANDY -d $SEG -p udp \
+  -j DNAT --to-destination ${CIP}
+
+echo "  添加到 Web 容器的 DNAT 規則 (ICMP - ping)"
+sudo iptables -t nat -A PREROUTING -s $ANDY -d $SEG -p icmp \
   -j DNAT --to-destination ${CIP}
 
 # 將進入 SEG 的 DNS 流量導向 dns-responder（優先於廣域 DNAT）
